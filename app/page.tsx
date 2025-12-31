@@ -1,63 +1,71 @@
-import Image from "next/image";
+import { SUGGESTED_QUESTIONS } from "@/lib/constants";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <main className="flex w-full max-w-3xl flex-col items-center gap-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold tracking-tight">
+            Vitasigns Training Bot
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-2 text-lg text-muted-foreground">
+            Your AI assistant for clinical SOPs, HubSpot workflows, and HealthArc navigation
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Chat Interface Placeholder */}
+        <div className="w-full rounded-lg border bg-card p-6 shadow-sm">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-4 text-5xl">
+              <span role="img" aria-label="robot">
+                {/* Robot icon placeholder */}
+              </span>
+            </div>
+            <h2 className="text-xl font-semibold">Welcome to Training Bot</h2>
+            <p className="mt-2 max-w-md text-muted-foreground">
+              Ask me anything about Vitasigns procedures, HubSpot workflows, or HealthArc navigation.
+              I am here to help you get up to speed quickly.
+            </p>
+          </div>
+        </div>
+
+        {/* Suggested Questions */}
+        <div className="w-full">
+          <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+            Suggested questions to get started:
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTED_QUESTIONS.map((question, index) => (
+              <button
+                key={index}
+                className="rounded-full border bg-secondary px-4 py-2 text-sm transition-colors hover:bg-secondary/80"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Chat Input Placeholder */}
+        <div className="w-full">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Ask a question about Vitasigns training..."
+              className="flex-1 rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              disabled
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <button
+              className="rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              disabled
+            >
+              Send
+            </button>
+          </div>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            Chat functionality will be enabled in Sprint 3
+          </p>
         </div>
       </main>
     </div>
