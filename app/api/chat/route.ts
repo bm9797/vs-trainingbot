@@ -119,10 +119,6 @@ export async function POST(req: Request) {
 
     return createUIMessageStreamResponse({
       stream,
-      headers: {
-        "X-Sources": JSON.stringify(sources),
-        "X-Chunks-Count": String(chunks.length),
-      },
     });
   } catch (error) {
     console.error("[Chat API] Error:", error);

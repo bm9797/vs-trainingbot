@@ -1,6 +1,7 @@
 "use client";
 
-import { Bot, MessageSquare } from "lucide-react";
+import Image from "next/image";
+import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SUGGESTED_QUESTIONS } from "@/lib/constants";
 
@@ -11,14 +12,21 @@ interface EmptyStateProps {
 export function EmptyState({ onSelectQuestion }: EmptyStateProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
-      {/* Icon */}
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-        <Bot className="h-8 w-8 text-primary" />
+      {/* Logo */}
+      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/5 p-2">
+        <Image
+          src="/logo.png"
+          alt="Vitasigns"
+          width={64}
+          height={64}
+          className="h-16 w-auto"
+          priority
+        />
       </div>
 
       {/* Welcome Text */}
       <h2 className="mb-2 text-2xl font-semibold tracking-tight">
-        Welcome to Training Bot
+        Welcome to Vitasigns Training Bot
       </h2>
       <p className="mb-8 max-w-md text-center text-muted-foreground">
         I am your AI assistant for Vitasigns training. Ask me about clinical SOPs,

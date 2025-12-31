@@ -5,6 +5,15 @@
 
 export type MessageRole = "user" | "assistant" | "system";
 
+/**
+ * Source information for citations
+ */
+export interface CitationSource {
+  source: string;
+  title?: string;
+  category?: string;
+}
+
 export interface Message {
   id: string;
   role: MessageRole;
@@ -12,6 +21,7 @@ export interface Message {
   timestamp?: Date;
   createdAt?: Date;
   isLoading?: boolean;
+  sources?: CitationSource[];
 }
 
 /**

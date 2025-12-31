@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Message as MessageType } from "@/lib/types";
 import { User, Bot, Loader2 } from "lucide-react";
+import { Citation, parseCitationReferences, CitationBadge } from "./Citation";
 
 interface MessageProps {
   message: MessageType;
@@ -76,11 +77,11 @@ function renderContent(content: string): React.ReactNode {
 }
 
 /**
- * Formats inline text with bold and inline code support
+ * Formats inline text with bold, inline code, and citation reference support
  */
 function formatInlineText(text: string): React.ReactNode {
-  // Handle bold text (**text**) and inline code (`code`)
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  // Handle bold text (**text**), inline code (`code`), and source references ([Source N])
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[Source\s+\d+[^\]]*\])/gi);
 
   return parts.map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
@@ -100,6 +101,12 @@ function formatInlineText(text: string): React.ReactNode {
         </code>
       );
     }
+    // Handle source references like [Source 1] or [Source 1: Title]
+    const sourceMatch = part.match(/^\[Source\s+(\d+)[^\]]*\]$/i);
+    if (sourceMatch) {
+      const sourceNum = parseInt(sourceMatch[1], 10);
+      return <CitationBadge key={index} sourceNumber={sourceNum} />;
+    }
     return part;
   });
 }
@@ -108,10 +115,21 @@ export function Message({ message }: MessageProps) {
   const isUser = message.role === "user";
   const isLoading = message.isLoading;
 
+  // Check if this assistant message contains source references and extract them
+  const { hasSourceReferences, sources: extractedSources } = !isUser && !isLoading && message.content
+    ? parseCitationReferences(message.content)
+    : { hasSourceReferences: false, sources: [] };
+
+  // Use message sources if available, otherwise use extracted sources from content
+  const sourcesToShow = message.sources?.length ? message.sources : extractedSources;
+
+  // Show citations if we have sources to display
+  const showCitations = !isUser && !isLoading && hasSourceReferences && sourcesToShow.length > 0;
+
   return (
     <div
       className={cn(
-        "flex w-full gap-3 px-4 py-4",
+        "flex w-full gap-3 px-4 py-4 animate-fade-in",
         isUser ? "flex-row-reverse" : "flex-row"
       )}
     >
@@ -130,23 +148,30 @@ export function Message({ message }: MessageProps) {
       </div>
 
       {/* Message Content */}
-      <div
-        className={cn(
-          "flex max-w-[80%] flex-col gap-1 rounded-2xl px-4 py-3",
-          isUser
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted text-foreground"
-        )}
-      >
-        {isLoading ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Thinking...</span>
-          </div>
-        ) : (
-          <div className="text-sm leading-relaxed whitespace-pre-wrap">
-            {isUser ? message.content : renderContent(message.content)}
-          </div>
+      <div className="flex max-w-[80%] flex-col">
+        <div
+          className={cn(
+            "flex flex-col gap-1 rounded-2xl px-4 py-3",
+            isUser
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-foreground"
+          )}
+        >
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Thinking...</span>
+            </div>
+          ) : (
+            <div className="text-sm leading-relaxed whitespace-pre-wrap">
+              {isUser ? message.content : renderContent(message.content)}
+            </div>
+          )}
+        </div>
+
+        {/* Citations section for assistant messages */}
+        {showCitations && (
+          <Citation sources={sourcesToShow} />
         )}
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { type UIMessage, DefaultChatTransport } from "ai";
 import { MessageList, ChatInput, EmptyState } from "@/components/chat";
+import { ChatSkeleton } from "@/components/chat/ChatSkeleton";
 import { ChatLayout } from "@/components/chat/ChatLayout";
 import { Message } from "@/lib/types";
 import {
@@ -25,7 +26,10 @@ function getTextFromParts(parts: UIMessage["parts"]): string {
 /**
  * Convert UIMessage to our Message format for display
  */
-function convertToDisplayMessage(msg: UIMessage, isStreaming = false): Message {
+function convertToDisplayMessage(
+  msg: UIMessage,
+  isStreaming = false
+): Message {
   const content = getTextFromParts(msg.parts);
   return {
     id: msg.id,
@@ -196,6 +200,11 @@ export default function Home() {
   }, [setMessages]);
 
   const hasMessages = messagesWithLoading.length > 0;
+
+  // Show skeleton during initial hydration
+  if (!isHydrated) {
+    return <ChatSkeleton />;
+  }
 
   return (
     <ChatLayout
