@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useCallback, useSyncExternalStore } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useChat } from "@ai-sdk/react";
+import { type UIMessage, DefaultChatTransport } from "ai";
 import { MessageList, ChatInput, EmptyState } from "@/components/chat";
 import { ChatLayout } from "@/components/chat/ChatLayout";
-import { Message, createUserMessage, createAssistantMessage } from "@/lib/types";
+import { Message } from "@/lib/types";
 import {
   ChatSession,
   createChatSession,
@@ -11,81 +13,161 @@ import {
 } from "@/lib/chatStorage";
 
 /**
- * Custom hook to get the initial session from localStorage
- * Uses useSyncExternalStore for hydration safety
+ * Helper to extract text content from UIMessage parts
  */
-function useInitialSession() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const subscribe = useCallback((_: () => void) => {
-    // No-op subscribe since we only need initial value
-    return () => {};
-  }, []);
-
-  const getSnapshot = useCallback(() => {
-    const sessions = getAllChatSessions();
-    if (sessions.length > 0) {
-      return JSON.stringify(sessions[0]);
-    }
-    return JSON.stringify(createChatSession([]));
-  }, []);
-
-  const getServerSnapshot = useCallback(() => {
-    return JSON.stringify(createChatSession([]));
-  }, []);
-
-  const sessionJson = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot
-  );
-
-  return JSON.parse(sessionJson) as ChatSession;
+function getTextFromParts(parts: UIMessage["parts"]): string {
+  return parts
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map((part) => part.text)
+    .join("");
 }
 
+/**
+ * Convert UIMessage to our Message format for display
+ */
+function convertToDisplayMessage(msg: UIMessage, isStreaming = false): Message {
+  const content = getTextFromParts(msg.parts);
+  return {
+    id: msg.id,
+    role: msg.role as "user" | "assistant",
+    content,
+    timestamp: new Date(),
+    isLoading: msg.role === "assistant" && isStreaming && content === "",
+  };
+}
+
+/**
+ * Convert stored messages to UIMessage format for useChat
+ */
+function convertToUIMessages(messages: Message[]): UIMessage[] {
+  return messages.map((msg) => ({
+    id: msg.id,
+    role: msg.role as "user" | "assistant",
+    parts: [{ type: "text" as const, text: msg.content }],
+  }));
+}
+
+/**
+ * Stable initial session for SSR hydration
+ * Uses fixed values to avoid hydration mismatch
+ */
+const INITIAL_SESSION: ChatSession = {
+  id: "initial_session",
+  title: "New Chat",
+  messages: [],
+  createdAt: "1970-01-01T00:00:00.000Z",
+  updatedAt: "1970-01-01T00:00:00.000Z",
+};
+
 export default function Home() {
-  const initialSession = useInitialSession();
+  const [error, setError] = useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [currentSession, setCurrentSession] = useState<ChatSession>(INITIAL_SESSION);
+  const initialLoadDone = useRef(false);
 
-  // Initialize state with functions for lazy evaluation
-  const [messages, setMessages] = useState<Message[]>(() => {
-    return initialSession.messages || [];
+  // Load session from localStorage after hydration
+  // This is a legitimate use of setState in useEffect for client-only data
+  useEffect(() => {
+    if (initialLoadDone.current) return;
+    initialLoadDone.current = true;
+
+    const sessions = getAllChatSessions();
+    if (sessions.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCurrentSession(sessions[0]);
+    } else {
+      setCurrentSession(createChatSession([]));
+    }
+    setIsHydrated(true);
+  }, []);
+
+  // Create the transport with custom body transformation
+  const transport = useMemo(() => {
+    return new DefaultChatTransport({
+      api: "/api/chat",
+      // Transform the messages to our expected format
+      prepareSendMessagesRequest: async ({ messages }) => {
+        return {
+          body: {
+            messages: messages.map((msg) => ({
+              id: msg.id,
+              role: msg.role,
+              content: getTextFromParts(msg.parts),
+            })),
+          },
+        };
+      },
+    });
+  }, []);
+
+  // Use the Vercel AI SDK useChat hook for streaming responses
+  const chatHelpers = useChat({
+    id: currentSession.id,
+    transport,
+    onError: (err) => {
+      console.error("[Chat] Error:", err);
+      setError(err.message || "An error occurred. Please try again.");
+    },
+    onFinish: () => {
+      setError(null);
+    },
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const { messages, status, sendMessage, setMessages } = chatHelpers;
 
-  const [currentSession, setCurrentSession] = useState<ChatSession>(() => {
-    return initialSession;
-  });
+  // Sync messages when hydration completes and session has messages
+  const messagesInitialized = useRef(false);
+  useEffect(() => {
+    if (isHydrated && !messagesInitialized.current && currentSession.messages.length > 0) {
+      messagesInitialized.current = true;
+      setMessages(convertToUIMessages(currentSession.messages));
+    }
+  }, [isHydrated, currentSession.messages, setMessages]);
+
+  const isLoading = status === "streaming" || status === "submitted";
+
+  // Clear error after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Convert AI SDK messages to our Message format for display
+  const displayMessages: Message[] = messages.map((msg) =>
+    convertToDisplayMessage(msg, isLoading)
+  );
+
+  // Add a loading placeholder if we're waiting for the first response
+  const messagesWithLoading =
+    isLoading &&
+    (displayMessages.length === 0 ||
+      displayMessages[displayMessages.length - 1]?.role === "user")
+      ? [
+          ...displayMessages,
+          {
+            id: "loading",
+            role: "assistant" as const,
+            content: "",
+            isLoading: true,
+          },
+        ]
+      : displayMessages;
 
   const handleSendMessage = useCallback(
-    (content: string) => {
-      // Create and add user message
-      const userMessage = createUserMessage(content);
-      const newMessages = [...messages, userMessage];
-      setMessages(newMessages);
-
-      // For now, simulate an assistant response (API integration comes in Sprint 4)
-      setIsLoading(true);
-
-      // Create a loading placeholder message
-      const loadingMessage = createAssistantMessage("", true);
-      setMessages((prev) => [...prev, loadingMessage]);
-
-      // Simulate API delay and response
-      setTimeout(() => {
-        setMessages((prev) => {
-          // Remove the loading message and add the actual response
-          const withoutLoading = prev.filter(
-            (msg) => msg.id !== loadingMessage.id
-          );
-          const assistantMessage = createAssistantMessage(
-            getPlaceholderResponse(content)
-          );
-          return [...withoutLoading, assistantMessage];
-        });
-        setIsLoading(false);
-      }, 1000);
+    async (content: string) => {
+      setError(null);
+      try {
+        await sendMessage({ text: content });
+      } catch (err) {
+        console.error("[Chat] Send error:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to send message"
+        );
+      }
     },
-    [messages]
+    [sendMessage]
   );
 
   const handleSelectQuestion = useCallback(
@@ -95,32 +177,45 @@ export default function Home() {
     [handleSendMessage]
   );
 
-  const handleSessionChange = useCallback((session: ChatSession | null) => {
-    if (session) {
-      setCurrentSession(session);
-      setMessages(session.messages);
-    }
-  }, []);
+  const handleSessionChange = useCallback(
+    (session: ChatSession | null) => {
+      if (session) {
+        setCurrentSession(session);
+        // Convert session messages to AI SDK format
+        setMessages(convertToUIMessages(session.messages));
+      }
+    },
+    [setMessages]
+  );
 
   const handleNewChat = useCallback(() => {
     const newSession = createChatSession([]);
     setCurrentSession(newSession);
     setMessages([]);
-  }, []);
+    setError(null);
+  }, [setMessages]);
 
-  const hasMessages = messages.length > 0;
+  const hasMessages = messagesWithLoading.length > 0;
 
   return (
     <ChatLayout
-      messages={messages}
+      messages={displayMessages}
       currentSession={currentSession}
       onSessionChange={handleSessionChange}
       onNewChat={handleNewChat}
     >
+      {/* Error Banner */}
+      {error && (
+        <div className="mx-4 mt-2 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <span className="font-medium">Error: </span>
+          {error}
+        </div>
+      )}
+
       {/* Main Chat Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {hasMessages ? (
-          <MessageList messages={messages} />
+          <MessageList messages={messagesWithLoading} />
         ) : (
           <EmptyState onSelectQuestion={handleSelectQuestion} />
         )}
@@ -132,82 +227,4 @@ export default function Home() {
       </div>
     </ChatLayout>
   );
-}
-
-/**
- * Placeholder response generator for Sprint 3 testing
- * This will be replaced with actual API calls in Sprint 4
- */
-function getPlaceholderResponse(question: string): string {
-  const lowerQuestion = question.toLowerCase();
-
-  if (lowerQuestion.includes("sop") || lowerQuestion.includes("clinical")) {
-    return `**Clinical SOPs Overview**
-
-Here are the key clinical SOPs you should be familiar with:
-
-1. **Patient Intake Protocol** - Covers the initial patient registration and data collection process
-2. **Documentation Standards** - Guidelines for proper medical documentation
-3. **Compliance Requirements** - HIPAA and regulatory compliance procedures
-4. **Quality Assurance** - Regular audit and review processes
-
-I can provide more details on any specific SOP. What would you like to know more about?`;
-  }
-
-  if (lowerQuestion.includes("hubspot")) {
-    return `**HubSpot Navigation Guide**
-
-The HubSpot dashboard is organized into several key areas:
-
-- **Contacts** - Manage all contact records and their properties
-- **Companies** - View and edit company information
-- **Deals** - Track sales pipeline and deal stages
-- **Tasks** - Manage your to-do items and follow-ups
-
-To get started, I recommend exploring the Contacts section first. Would you like a detailed walkthrough of any specific area?`;
-  }
-
-  if (
-    lowerQuestion.includes("healtharc") ||
-    lowerQuestion.includes("patient intake")
-  ) {
-    return `**HealthArc Patient Intake Process**
-
-The patient intake process in HealthArc follows these steps:
-
-1. **Create New Patient Record** - Click "Add Patient" from the main dashboard
-2. **Enter Demographics** - Fill in patient information including name, DOB, and contact details
-3. **Insurance Verification** - Add insurance information and verify eligibility
-4. **Schedule Appointment** - Select available time slots and assign to provider
-5. **Send Confirmation** - System automatically sends confirmation to patient
-
-Would you like me to explain any of these steps in more detail?`;
-  }
-
-  if (
-    lowerQuestion.includes("compliance") ||
-    lowerQuestion.includes("documentation")
-  ) {
-    return `**Documentation Compliance Requirements**
-
-All documentation must adhere to the following requirements:
-
-- **Accuracy** - Information must be factually correct and up-to-date
-- **Completeness** - All required fields must be filled out
-- **Timeliness** - Documentation should be completed within 24 hours
-- **Security** - PHI must be handled according to HIPAA guidelines
-- **Retention** - Records must be kept for the required retention period
-
-Do you have specific questions about any compliance requirement?`;
-  }
-
-  return `Thank you for your question!
-
-I am currently in demonstration mode (Sprint 3). In the next sprint, I will be connected to the Vitasigns knowledge base and will be able to provide accurate answers about:
-
-- **Clinical SOPs** - Standard operating procedures and protocols
-- **HubSpot Workflows** - CRM navigation and best practices
-- **HealthArc Navigation** - Platform usage and patient management
-
-For now, try asking about one of these topics and I will show you a sample response.`;
 }

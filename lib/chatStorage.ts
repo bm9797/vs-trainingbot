@@ -27,9 +27,10 @@ interface StoredChatSession {
   title: string;
   messages: Array<{
     id: string;
-    role: "user" | "assistant";
+    role: "user" | "assistant" | "system";
     content: string;
     timestamp: string;
+    createdAt?: string;
     isLoading?: boolean;
   }>;
   createdAt: string;
@@ -130,13 +131,22 @@ function setStoredSessions(sessions: StoredChatSession[]): void {
 function toStoredSession(session: ChatSession): StoredChatSession {
   return {
     ...session,
-    messages: session.messages.map((msg) => ({
-      ...msg,
-      timestamp:
-        msg.timestamp instanceof Date
-          ? msg.timestamp.toISOString()
-          : msg.timestamp,
-    })),
+    messages: session.messages.map((msg) => {
+      // Handle both timestamp and createdAt from AI SDK
+      const date = msg.timestamp || msg.createdAt || new Date();
+      const timestampStr = date instanceof Date ? date.toISOString() : String(date);
+      const createdAtStr = msg.createdAt
+        ? (msg.createdAt instanceof Date ? msg.createdAt.toISOString() : String(msg.createdAt))
+        : undefined;
+      return {
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: timestampStr,
+        createdAt: createdAtStr,
+        isLoading: msg.isLoading,
+      };
+    }),
   };
 }
 
@@ -147,8 +157,12 @@ function fromStoredSession(stored: StoredChatSession): ChatSession {
   return {
     ...stored,
     messages: stored.messages.map((msg) => ({
-      ...msg,
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
       timestamp: new Date(msg.timestamp),
+      createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined,
+      isLoading: msg.isLoading,
     })),
   };
 }
