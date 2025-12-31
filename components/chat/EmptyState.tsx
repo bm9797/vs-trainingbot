@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SUGGESTED_QUESTIONS } from "@/lib/constants";
@@ -14,13 +13,10 @@ export function EmptyState({ onSelectQuestion }: EmptyStateProps) {
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
       {/* Logo */}
       <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/5 p-2">
-        <Image
+        <img
           src="/logo.png"
           alt="Vitasigns"
-          width={64}
-          height={64}
-          className="h-16 w-auto"
-          priority
+          className="h-12 w-auto"
         />
       </div>
 

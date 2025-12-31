@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -177,13 +176,10 @@ export function ChatLayout({
             <span className="sr-only">Open menu</span>
           </Button>
           <div className="flex items-center gap-2">
-            <Image
+            <img
               src="/logo.png"
               alt="Vitasigns"
-              width={32}
-              height={32}
               className="h-8 w-auto"
-              priority
             />
             <h1 className="text-lg font-semibold">Vitasigns Training Bot</h1>
           </div>
@@ -192,13 +188,10 @@ export function ChatLayout({
         {/* Desktop Header */}
         <header className="sticky top-0 z-10 hidden h-14 items-center border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:flex">
           <div className="mx-auto flex w-full max-w-3xl items-center gap-2">
-            <Image
+            <img
               src="/logo.png"
               alt="Vitasigns"
-              width={36}
-              height={36}
               className="h-9 w-auto"
-              priority
             />
             <h1 className="text-lg font-semibold">Vitasigns Training Bot</h1>
           </div>

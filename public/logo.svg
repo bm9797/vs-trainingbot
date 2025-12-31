@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" fill="none">
+  <!-- Vitasigns W Logo - Interlocking curves -->
+  <g fill="#5B8A7D" stroke="none">
+    <!-- Left arm -->
+    <path d="M5 8 L5 12 Q5 18 10 24 L32 62 Q36 70 44 70 Q52 70 56 62 L60 54 L56 46 L52 54 Q50 58 48 58 Q46 58 44 54 L22 16 Q18 10 18 8 L18 5 L5 5 Z"/>
+    <!-- Right arm -->
+    <path d="M115 8 L115 12 Q115 18 110 24 L88 62 Q84 70 76 70 Q68 70 64 62 L60 54 L64 46 L68 54 Q70 58 72 58 Q74 58 76 54 L98 16 Q102 10 102 8 L102 5 L115 5 Z"/>
+    <!-- Center overlap enhancement -->
+    <path d="M60 40 L52 54 Q50 58 52 62 L56 70 Q58 74 60 74 Q62 74 64 70 L68 62 Q70 58 68 54 L60 40 Z"/>
+  </g>
+</svg>
