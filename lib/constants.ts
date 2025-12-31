@@ -28,7 +28,7 @@ If a question falls outside the scope of Vitasigns training materials, politely 
  * Model configuration
  */
 export const MODEL_CONFIG = {
-  model: "gpt-4o-mini",
+  model: "gpt-5-mini",
   temperature: 0.7,
   maxTokens: 1024, // Used for display/reference
   maxOutputTokens: 1024, // Used by AI SDK v6
