@@ -1,38 +1,92 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useSyncExternalStore } from "react";
 import { MessageList, ChatInput, EmptyState } from "@/components/chat";
+import { ChatLayout } from "@/components/chat/ChatLayout";
 import { Message, createUserMessage, createAssistantMessage } from "@/lib/types";
+import {
+  ChatSession,
+  createChatSession,
+  getAllChatSessions,
+} from "@/lib/chatStorage";
+
+/**
+ * Custom hook to get the initial session from localStorage
+ * Uses useSyncExternalStore for hydration safety
+ */
+function useInitialSession() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const subscribe = useCallback((_: () => void) => {
+    // No-op subscribe since we only need initial value
+    return () => {};
+  }, []);
+
+  const getSnapshot = useCallback(() => {
+    const sessions = getAllChatSessions();
+    if (sessions.length > 0) {
+      return JSON.stringify(sessions[0]);
+    }
+    return JSON.stringify(createChatSession([]));
+  }, []);
+
+  const getServerSnapshot = useCallback(() => {
+    return JSON.stringify(createChatSession([]));
+  }, []);
+
+  const sessionJson = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
+
+  return JSON.parse(sessionJson) as ChatSession;
+}
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const initialSession = useInitialSession();
+
+  // Initialize state with functions for lazy evaluation
+  const [messages, setMessages] = useState<Message[]>(() => {
+    return initialSession.messages || [];
+  });
+
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = useCallback((content: string) => {
-    // Create and add user message
-    const userMessage = createUserMessage(content);
-    setMessages((prev) => [...prev, userMessage]);
+  const [currentSession, setCurrentSession] = useState<ChatSession>(() => {
+    return initialSession;
+  });
 
-    // For now, simulate an assistant response (API integration comes in Sprint 4)
-    setIsLoading(true);
+  const handleSendMessage = useCallback(
+    (content: string) => {
+      // Create and add user message
+      const userMessage = createUserMessage(content);
+      const newMessages = [...messages, userMessage];
+      setMessages(newMessages);
 
-    // Create a loading placeholder message
-    const loadingMessage = createAssistantMessage("", true);
-    setMessages((prev) => [...prev, loadingMessage]);
+      // For now, simulate an assistant response (API integration comes in Sprint 4)
+      setIsLoading(true);
 
-    // Simulate API delay and response
-    setTimeout(() => {
-      setMessages((prev) => {
-        // Remove the loading message and add the actual response
-        const withoutLoading = prev.filter((msg) => msg.id !== loadingMessage.id);
-        const assistantMessage = createAssistantMessage(
-          getPlaceholderResponse(content)
-        );
-        return [...withoutLoading, assistantMessage];
-      });
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+      // Create a loading placeholder message
+      const loadingMessage = createAssistantMessage("", true);
+      setMessages((prev) => [...prev, loadingMessage]);
+
+      // Simulate API delay and response
+      setTimeout(() => {
+        setMessages((prev) => {
+          // Remove the loading message and add the actual response
+          const withoutLoading = prev.filter(
+            (msg) => msg.id !== loadingMessage.id
+          );
+          const assistantMessage = createAssistantMessage(
+            getPlaceholderResponse(content)
+          );
+          return [...withoutLoading, assistantMessage];
+        });
+        setIsLoading(false);
+      }, 1000);
+    },
+    [messages]
+  );
 
   const handleSelectQuestion = useCallback(
     (question: string) => {
@@ -41,31 +95,42 @@ export default function Home() {
     [handleSendMessage]
   );
 
+  const handleSessionChange = useCallback((session: ChatSession | null) => {
+    if (session) {
+      setCurrentSession(session);
+      setMessages(session.messages);
+    }
+  }, []);
+
+  const handleNewChat = useCallback(() => {
+    const newSession = createChatSession([]);
+    setCurrentSession(newSession);
+    setMessages([]);
+  }, []);
+
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-14 max-w-3xl items-center px-4">
-          <h1 className="text-lg font-semibold">Vitasigns Training Bot</h1>
-        </div>
-      </header>
-
+    <ChatLayout
+      messages={messages}
+      currentSession={currentSession}
+      onSessionChange={handleSessionChange}
+      onNewChat={handleNewChat}
+    >
       {/* Main Chat Area */}
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {hasMessages ? (
           <MessageList messages={messages} />
         ) : (
           <EmptyState onSelectQuestion={handleSelectQuestion} />
         )}
-      </main>
+      </div>
 
       {/* Chat Input - Fixed at bottom */}
-      <div className="sticky bottom-0 mx-auto w-full max-w-3xl">
+      <div className="sticky bottom-0 w-full">
         <ChatInput onSend={handleSendMessage} isDisabled={isLoading} />
       </div>
-    </div>
+    </ChatLayout>
   );
 }
 
@@ -102,7 +167,10 @@ The HubSpot dashboard is organized into several key areas:
 To get started, I recommend exploring the Contacts section first. Would you like a detailed walkthrough of any specific area?`;
   }
 
-  if (lowerQuestion.includes("healtharc") || lowerQuestion.includes("patient intake")) {
+  if (
+    lowerQuestion.includes("healtharc") ||
+    lowerQuestion.includes("patient intake")
+  ) {
     return `**HealthArc Patient Intake Process**
 
 The patient intake process in HealthArc follows these steps:
@@ -116,7 +184,10 @@ The patient intake process in HealthArc follows these steps:
 Would you like me to explain any of these steps in more detail?`;
   }
 
-  if (lowerQuestion.includes("compliance") || lowerQuestion.includes("documentation")) {
+  if (
+    lowerQuestion.includes("compliance") ||
+    lowerQuestion.includes("documentation")
+  ) {
     return `**Documentation Compliance Requirements**
 
 All documentation must adhere to the following requirements:
