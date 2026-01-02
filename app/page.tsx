@@ -124,9 +124,9 @@ export default function Home() {
       console.error("[Chat] Error:", err);
       setError(err.message || "An error occurred. Please try again.");
     },
-    onFinish: (message) => {
-      console.log("[Chat] Finished, message:", message);
-      console.log("[Chat] Message parts:", message.parts);
+    onFinish: (finishData) => {
+      console.log("[Chat] Finished, data:", finishData);
+      console.log("[Chat] Message:", finishData.message);
       setError(null);
     },
   });
