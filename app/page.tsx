@@ -17,10 +17,22 @@ import {
  * Helper to extract text content from UIMessage parts
  */
 function getTextFromParts(parts: UIMessage["parts"]): string {
-  return parts
-    .filter((part): part is { type: "text"; text: string } => part.type === "text")
-    .map((part) => part.text)
+  // Handle various part formats from AI SDK
+  const textContent = parts
+    .map((part) => {
+      // Standard text part
+      if (part.type === "text" && "text" in part) {
+        return part.text;
+      }
+      // Text part with content field
+      if ("content" in part && typeof part.content === "string") {
+        return part.content;
+      }
+      return "";
+    })
     .join("");
+
+  return textContent;
 }
 
 /**
@@ -112,7 +124,9 @@ export default function Home() {
       console.error("[Chat] Error:", err);
       setError(err.message || "An error occurred. Please try again.");
     },
-    onFinish: () => {
+    onFinish: (message) => {
+      console.log("[Chat] Finished, message:", message);
+      console.log("[Chat] Message parts:", message.parts);
       setError(null);
     },
   });
