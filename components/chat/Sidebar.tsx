@@ -143,18 +143,20 @@ export function Sidebar({
                     {formatRelativeTime(session.updatedAt)}
                   </span>
                 </div>
-                {(hoveredSessionId === session.id ||
-                  currentSessionId === session.id) && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={(e) => handleDelete(e, session.id)}
-                    title="Delete chat"
-                  >
-                    <Trash2 className="h-3 w-3 text-destructive" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-6 w-6 shrink-0 transition-opacity",
+                    hoveredSessionId === session.id || currentSessionId === session.id
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100"
+                  )}
+                  onClick={(e) => handleDelete(e, session.id)}
+                  title="Delete chat"
+                >
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
               </div>
             ))
           )}

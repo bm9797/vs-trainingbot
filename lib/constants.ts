@@ -4,6 +4,8 @@
  * - Clinical SOPs (Standard Operating Procedures)
  * - HubSpot workflows and best practices
  * - HealthArc navigation and usage
+ *
+ * Last updated: 2026-01-02T23:55:00Z
  */
 
 export const SYSTEM_PROMPT = `You are **Vitasigns Training Bot** — an internal, SOP-first assistant for Vitasigns employees.
