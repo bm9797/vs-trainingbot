@@ -8,7 +8,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import * as pdf from "pdf-parse";
+import pdf from "pdf-parse";
 import { config } from "dotenv";
 
 // Load environment variables from .env.local
