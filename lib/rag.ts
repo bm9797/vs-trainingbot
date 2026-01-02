@@ -164,18 +164,32 @@ export async function getRAGContext(query: string): Promise<{
   sources: FormattedContext["sources"];
   chunks: RetrievedChunk[];
 }> {
-  // Retrieve relevant chunks
-  const chunks = await retrieveContext(query);
+  try {
+    // Retrieve relevant chunks
+    const chunks = await retrieveContext(query);
 
-  // Format for prompt
-  const formattedContext = formatContextForPrompt(chunks);
+    // Format for prompt
+    const formattedContext = formatContextForPrompt(chunks);
 
-  // Build the context section
-  const contextSection = buildContextSection(formattedContext);
+    // Build the context section
+    const contextSection = buildContextSection(formattedContext);
 
-  return {
-    contextSection,
-    sources: formattedContext.sources,
-    chunks,
-  };
+    return {
+      contextSection,
+      sources: formattedContext.sources,
+      chunks,
+    };
+  } catch (error) {
+    // Log the error but don't fail - respond without RAG context
+    console.error("[RAG] Failed to retrieve context:", error);
+
+    return {
+      contextSection: `
+CONTEXT:
+The knowledge base is temporarily unavailable. Please answer based on your general knowledge about workplace training, clinical procedures, CRM systems, and healthcare software. Let the user know that specific training document references are temporarily unavailable.
+`,
+      sources: [],
+      chunks: [],
+    };
+  }
 }
