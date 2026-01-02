@@ -72,8 +72,8 @@ You are evaluated on: correctness, traceability to source docs, clarity of steps
  * Model configuration
  */
 export const MODEL_CONFIG = {
-  model: "gpt-5-nano",
-  temperature: 0.3,
+  model: "gpt-4o-mini",
+  temperature: 0.5,
   maxTokens: 1024, // Used for display/reference
   maxOutputTokens: 1024, // Used by AI SDK v6
 } as const;
