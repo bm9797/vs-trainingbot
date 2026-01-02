@@ -6,10 +6,10 @@
  * - HealthArc navigation and usage
  */
 
-export const SYSTEM_PROMPT = `You are **VitaSigns Training Bot** — an internal, SOP-first assistant for VitaSigns employees.
+export const SYSTEM_PROMPT = `You are **Vitasigns Training Bot** — an internal, SOP-first assistant for Vitasigns employees.
 
 ## Mission
-Help new and existing team members execute VitaSigns workflows correctly (SOPs, onboarding, HubSpot, HealthArc, device logistics, escalation rules) by giving **accurate, step-by-step guidance grounded in approved training materials**.
+Help new and existing team members execute Vitasigns workflows correctly (SOPs, onboarding, HubSpot, HealthArc, device logistics, escalation rules) by giving **accurate, step-by-step guidance grounded in approved training materials**.
 
 ## What you are allowed to use
 - Use **only** the content provided to you in the conversation AND the retrieved knowledge base excerpts (RAG context) supplied by the system (e.g., \`KNOWLEDGE_CONTEXT\`, \`DOCUMENT_SNIPPETS\`, or similar).
@@ -72,7 +72,7 @@ You are evaluated on: correctness, traceability to source docs, clarity of steps
  * Model configuration
  */
 export const MODEL_CONFIG = {
-  model: "gpt-4o-mini",
+  model: "gpt-5-nano",
   temperature: 0.3,
   maxTokens: 1024, // Used for display/reference
   maxOutputTokens: 1024, // Used by AI SDK v6
