@@ -82,34 +82,47 @@ export async function POST(req: Request) {
         // Generate a unique ID for the text part
         const textPartId = generateId();
 
-        // Signal start of text
-        writer.write({ type: "text-start", id: textPartId });
+        try {
+          // Signal start of text
+          writer.write({ type: "text-start", id: textPartId });
 
-        const result = streamText({
-          model: openai(MODEL_CONFIG.model),
-          system: systemPrompt,
-          messages: modelMessages,
-          temperature: MODEL_CONFIG.temperature,
-          maxOutputTokens: MODEL_CONFIG.maxOutputTokens,
-          onFinish: async ({ usage }) => {
-            // Log usage for monitoring
-            console.log("[Chat API] Response completed", {
-              inputTokens: usage?.inputTokens,
-              outputTokens: usage?.outputTokens,
-              totalTokens: (usage?.inputTokens || 0) + (usage?.outputTokens || 0),
-              sourcesUsed: sources.length,
-              chunksRetrieved: chunks.length,
-            });
-          },
-        });
+          console.log("[Chat API] Starting stream with model:", MODEL_CONFIG.model);
 
-        // Consume the stream and write deltas
-        for await (const chunk of result.textStream) {
-          writer.write({ type: "text-delta", delta: chunk, id: textPartId });
+          const result = streamText({
+            model: openai(MODEL_CONFIG.model),
+            system: systemPrompt,
+            messages: modelMessages,
+            temperature: MODEL_CONFIG.temperature,
+            maxOutputTokens: MODEL_CONFIG.maxOutputTokens,
+            onFinish: async ({ usage }) => {
+              // Log usage for monitoring
+              console.log("[Chat API] Response completed", {
+                inputTokens: usage?.inputTokens,
+                outputTokens: usage?.outputTokens,
+                totalTokens: (usage?.inputTokens || 0) + (usage?.outputTokens || 0),
+                sourcesUsed: sources.length,
+                chunksRetrieved: chunks.length,
+              });
+            },
+          });
+
+          // Consume the stream and write deltas
+          for await (const chunk of result.textStream) {
+            writer.write({ type: "text-delta", delta: chunk, id: textPartId });
+          }
+
+          // Signal end of text
+          writer.write({ type: "text-end", id: textPartId });
+        } catch (streamError) {
+          console.error("[Chat API] Error during streaming:", streamError);
+          // Write error message to stream so user sees something
+          writer.write({
+            type: "text-delta",
+            delta: "I'm having trouble generating a response right now. Please try again in a moment.",
+            id: textPartId
+          });
+          writer.write({ type: "text-end", id: textPartId });
         }
-
-        // Signal end of text
-        writer.write({ type: "text-end", id: textPartId });
       },
       onError: (error) => {
         console.error("[Chat API] Stream error:", error);
