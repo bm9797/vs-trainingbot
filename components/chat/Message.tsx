@@ -41,6 +41,27 @@ function renderContent(content: string): React.ReactNode {
     return (
       <span key={index}>
         {part.split("\n").map((line, lineIndex, arr) => {
+          // Handle headers (# ## ### etc.)
+          const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+          if (headerMatch) {
+            const level = headerMatch[1].length;
+            const headerText = headerMatch[2];
+            const headerClasses = {
+              1: "text-xl font-bold mt-4 mb-2",
+              2: "text-lg font-bold mt-3 mb-2",
+              3: "text-base font-semibold mt-3 mb-1",
+              4: "text-sm font-semibold mt-2 mb-1",
+              5: "text-sm font-medium mt-2 mb-1",
+              6: "text-sm font-medium mt-2 mb-1",
+            }[level] || "font-semibold";
+
+            return (
+              <span key={lineIndex} className={`block ${headerClasses}`}>
+                {formatInlineText(headerText)}
+              </span>
+            );
+          }
+
           // Handle bullet points
           if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
             const bulletContent = line.trim().slice(2);
