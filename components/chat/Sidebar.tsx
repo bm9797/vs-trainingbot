@@ -142,14 +142,11 @@ export function Sidebar({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={cn(
-                    "h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100",
-                    currentSessionId === session.id && "opacity-100"
-                  )}
+                  className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
                   onClick={(e) => handleDelete(e, session.id)}
                   title="Delete chat"
                 >
-                  <Trash2 className="h-3 w-3 text-destructive" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             ))
