@@ -22,7 +22,6 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
-  Trash2,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -119,22 +118,16 @@ function ChatItem({ session, isActive, onSelect, onDelete }: ChatItemProps) {
           </div>
         </div>
 
-        {/* Delete button - always visible but subtle */}
+        {/* Delete button - text link style */}
         <button
           type="button"
-          className={cn(
-            "shrink-0 rounded p-1.5 transition-colors",
-            "text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10",
-            "focus:outline-none focus:ring-2 focus:ring-destructive/50"
-          )}
+          className="shrink-0 rounded px-2 py-1 text-xs font-medium text-red-500 hover:bg-red-50 hover:text-red-700"
           onClick={(e) => {
             e.stopPropagation();
             setShowDeleteDialog(true);
           }}
-          aria-label={`Delete chat: ${session.title}`}
-          title="Delete chat"
         >
-          <Trash2 className="h-4 w-4" />
+          Delete
         </button>
       </div>
 
