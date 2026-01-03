@@ -11,7 +11,6 @@ import {
 import {
   MessageSquarePlus,
   MessageSquare,
-  Trash2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -139,15 +138,14 @@ export function Sidebar({
                     {formatRelativeTime(session.updatedAt)}
                   </span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0 hover:bg-destructive/10"
+                <button
+                  type="button"
+                  className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded text-lg font-bold text-red-500 hover:bg-red-100 hover:text-red-700"
                   onClick={(e) => handleDelete(e, session.id)}
                   title="Delete chat"
                 >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
+                  ×
+                </button>
               </div>
             ))
           )}
@@ -223,15 +221,14 @@ export function MobileSidebarContent({
                     {formatRelativeTime(session.updatedAt)}
                   </span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0 hover:bg-destructive/10"
+                <button
+                  type="button"
+                  className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded text-xl font-bold text-red-500 hover:bg-red-100 hover:text-red-700"
                   onClick={(e) => handleDelete(e, session.id)}
                   title="Delete chat"
                 >
-                  <Trash2 className="h-5 w-5 text-red-500" />
-                </Button>
+                  ×
+                </button>
               </div>
             ))
           )}
