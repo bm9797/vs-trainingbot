@@ -157,14 +157,18 @@ export function Sidebar({
                   <MessageSquare className="h-4 w-4 shrink-0" />
                   <span className="truncate font-medium">{session.title}</span>
                 </div>
-                <div className="mt-1 flex items-center justify-between pl-6 text-xs">
-                  <span className="text-muted-foreground">
+                <div className="mt-2 flex items-center justify-between pl-6">
+                  <span className="text-xs text-muted-foreground">
                     {formatRelativeTime(session.updatedAt)}
                   </span>
                   <button
                     type="button"
-                    className="font-medium text-red-500 hover:text-red-700 hover:underline"
-                    onClick={(e) => handleDelete(e, session.id)}
+                    className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-200"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDelete(e, session.id);
+                    }}
                   >
                     Delete
                   </button>
@@ -263,14 +267,18 @@ export function MobileSidebarContent({
                   <MessageSquare className="h-4 w-4 shrink-0" />
                   <span className="truncate font-medium">{session.title}</span>
                 </div>
-                <div className="mt-1 flex items-center justify-between pl-6 text-xs">
-                  <span className="text-muted-foreground">
+                <div className="mt-2 flex items-center justify-between pl-6">
+                  <span className="text-xs text-muted-foreground">
                     {formatRelativeTime(session.updatedAt)}
                   </span>
                   <button
                     type="button"
-                    className="font-medium text-red-500 hover:text-red-700 hover:underline"
-                    onClick={(e) => handleDelete(e, session.id)}
+                    className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-200"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDelete(e, session.id);
+                    }}
                   >
                     Delete
                   </button>
