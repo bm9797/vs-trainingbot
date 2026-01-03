@@ -142,11 +142,11 @@ export function Sidebar({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                  className="h-7 w-7 shrink-0 hover:bg-destructive/10"
                   onClick={(e) => handleDelete(e, session.id)}
                   title="Delete chat"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
               </div>
             ))
@@ -226,11 +226,11 @@ export function MobileSidebarContent({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0"
+                  className="h-8 w-8 shrink-0 hover:bg-destructive/10"
                   onClick={(e) => handleDelete(e, session.id)}
                   title="Delete chat"
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <Trash2 className="h-5 w-5 text-red-500" />
                 </Button>
               </div>
             ))

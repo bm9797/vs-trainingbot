@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,18 +45,12 @@ export function ChatLayout({
   // Use ref to track if we need to save (set by effect, read outside render)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Memoize the serialized messages to detect changes
-  const messagesKey = useMemo(() => {
-    const filteredMessages = messages.filter((msg) => !msg.isLoading);
-    return JSON.stringify(filteredMessages.map((m) => m.id));
-  }, [messages]);
-
   // Save session when messages change - using debounced timeout
   useEffect(() => {
     if (!currentSession || messages.length === 0) return;
 
     // Filter out loading messages before saving
-    const messagesToSave = messages.filter((msg) => !msg.isLoading);
+    const messagesToSave = messages.filter((msg) => !msg.isLoading && msg.content);
     if (messagesToSave.length === 0) return;
 
     // Clear any existing timeout
@@ -73,6 +67,7 @@ export function ChatLayout({
         updatedAt: new Date().toISOString(),
       };
 
+      console.log("[ChatLayout] Saving session:", updatedSession.id, "with", messagesToSave.length, "messages");
       saveChatSession(updatedSession);
 
       // Update sessions list
@@ -87,15 +82,14 @@ export function ChatLayout({
         }
         return [updatedSession, ...prev];
       });
-    }, 300);
+    }, 500);
 
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messagesKey, currentSession?.id]);
+  }, [messages, currentSession]);
 
   // Re-sync sessions from localStorage on mount (client-side only)
   useEffect(() => {
