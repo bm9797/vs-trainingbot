@@ -93,7 +93,7 @@ export const EMBEDDING_CONFIG = {
  */
 export const PINECONE_CONFIG = {
   topK: 5, // Number of similar documents to retrieve
-  minScore: 0.7, // Minimum similarity score threshold
+  minScore: 0.4, // Minimum similarity score threshold
 } as const;
 
 /**
