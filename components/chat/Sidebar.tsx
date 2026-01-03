@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,7 +37,6 @@ export function Sidebar({
   onToggleCollapse,
   className,
 }: SidebarProps) {
-  const [hoveredSessionId, setHoveredSessionId] = useState<string | null>(null);
 
   const handleDelete = (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
@@ -133,8 +131,6 @@ export function Sidebar({
                     : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                 )}
                 onClick={() => onSelectSession(session)}
-                onMouseEnter={() => setHoveredSessionId(session.id)}
-                onMouseLeave={() => setHoveredSessionId(null)}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col">
@@ -147,10 +143,8 @@ export function Sidebar({
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "h-6 w-6 shrink-0 transition-opacity",
-                    hoveredSessionId === session.id || currentSessionId === session.id
-                      ? "opacity-100"
-                      : "opacity-0 group-hover:opacity-100"
+                    "h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100",
+                    currentSessionId === session.id && "opacity-100"
                   )}
                   onClick={(e) => handleDelete(e, session.id)}
                   title="Delete chat"
