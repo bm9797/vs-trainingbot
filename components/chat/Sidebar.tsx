@@ -166,7 +166,9 @@ export function Sidebar({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleDelete(e, session.id);
+                    if (window.confirm("Delete this chat?")) {
+                      handleDelete(e, session.id);
+                    }
                   }}
                 >
                   Delete This Chat
@@ -274,7 +276,9 @@ export function MobileSidebarContent({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleDelete(e, session.id);
+                    if (window.confirm("Delete this chat?")) {
+                      handleDelete(e, session.id);
+                    }
                   }}
                 >
                   Delete This Chat
