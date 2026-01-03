@@ -110,6 +110,26 @@ export function Sidebar({
         </Button>
       </div>
 
+      {/* Clear All Button */}
+      {sessions.length > 0 && (
+        <div className="border-b px-3 pb-2">
+          <button
+            type="button"
+            className="w-full rounded bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600"
+            onClick={() => {
+              if (window.confirm("Delete all chats?")) {
+                sessions.forEach((s) => {
+                  deleteChatSession(s.id);
+                  onDeleteSession(s.id);
+                });
+              }
+            }}
+          >
+            Clear All Chats
+          </button>
+        </div>
+      )}
+
       {/* Chat List */}
       <ScrollArea className="flex-1 px-2">
         <div className="flex flex-col gap-1 pb-4">
@@ -124,28 +144,31 @@ export function Sidebar({
               <div
                 key={session.id}
                 className={cn(
-                  "group relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                  "rounded-md px-3 py-2 text-sm transition-colors",
                   currentSessionId === session.id
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                 )}
-                onClick={() => onSelectSession(session)}
               >
-                <MessageSquare className="h-4 w-4 shrink-0" />
-                <div className="flex min-w-0 flex-1 flex-col">
+                <div
+                  className="flex cursor-pointer items-center gap-2"
+                  onClick={() => onSelectSession(session)}
+                >
+                  <MessageSquare className="h-4 w-4 shrink-0" />
                   <span className="truncate font-medium">{session.title}</span>
-                  <span className="text-xs text-muted-foreground">
+                </div>
+                <div className="mt-1 flex items-center justify-between pl-6 text-xs">
+                  <span className="text-muted-foreground">
                     {formatRelativeTime(session.updatedAt)}
                   </span>
+                  <button
+                    type="button"
+                    className="font-medium text-red-500 hover:text-red-700 hover:underline"
+                    onClick={(e) => handleDelete(e, session.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded text-lg font-bold text-red-500 hover:bg-red-100 hover:text-red-700"
-                  onClick={(e) => handleDelete(e, session.id)}
-                  title="Delete chat"
-                >
-                  ×
-                </button>
               </div>
             ))
           )}
@@ -193,6 +216,26 @@ export function MobileSidebarContent({
         </Button>
       </div>
 
+      {/* Clear All Button */}
+      {sessions.length > 0 && (
+        <div className="border-b px-4 pb-3">
+          <button
+            type="button"
+            className="w-full rounded bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
+            onClick={() => {
+              if (window.confirm("Delete all chats?")) {
+                sessions.forEach((s) => {
+                  deleteChatSession(s.id);
+                  onDeleteSession(s.id);
+                });
+              }
+            }}
+          >
+            Clear All Chats
+          </button>
+        </div>
+      )}
+
       {/* Chat List */}
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-1 p-2">
@@ -207,28 +250,31 @@ export function MobileSidebarContent({
               <div
                 key={session.id}
                 className={cn(
-                  "group relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-3 text-sm transition-colors",
+                  "rounded-md px-3 py-3 text-sm transition-colors",
                   currentSessionId === session.id
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent/50"
                 )}
-                onClick={() => onSelectSession(session)}
               >
-                <MessageSquare className="h-4 w-4 shrink-0" />
-                <div className="flex min-w-0 flex-1 flex-col">
+                <div
+                  className="flex cursor-pointer items-center gap-2"
+                  onClick={() => onSelectSession(session)}
+                >
+                  <MessageSquare className="h-4 w-4 shrink-0" />
                   <span className="truncate font-medium">{session.title}</span>
-                  <span className="text-xs text-muted-foreground">
+                </div>
+                <div className="mt-1 flex items-center justify-between pl-6 text-xs">
+                  <span className="text-muted-foreground">
                     {formatRelativeTime(session.updatedAt)}
                   </span>
+                  <button
+                    type="button"
+                    className="font-medium text-red-500 hover:text-red-700 hover:underline"
+                    onClick={(e) => handleDelete(e, session.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded text-xl font-bold text-red-500 hover:bg-red-100 hover:text-red-700"
-                  onClick={(e) => handleDelete(e, session.id)}
-                  title="Delete chat"
-                >
-                  ×
-                </button>
               </div>
             ))
           )}
