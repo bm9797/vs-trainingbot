@@ -1,8 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   ChatSession,
   formatRelativeTime,
@@ -13,6 +22,7 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -26,6 +36,119 @@ interface SidebarProps {
   className?: string;
 }
 
+// Reusable delete confirmation dialog
+interface DeleteDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  description: string;
+}
+
+function DeleteConfirmDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  description,
+}: DeleteDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+          >
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Individual chat item component
+interface ChatItemProps {
+  session: ChatSession;
+  isActive: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+}
+
+function ChatItem({ session, isActive, onSelect, onDelete }: ChatItemProps) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  return (
+    <>
+      <div
+        className={cn(
+          "group relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-colors",
+          isActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+        )}
+        onClick={onSelect}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
+      >
+        {/* Chat icon */}
+        <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
+
+        {/* Title and timestamp */}
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium">{session.title}</div>
+          <div className="text-xs text-muted-foreground">
+            {formatRelativeTime(session.updatedAt)}
+          </div>
+        </div>
+
+        {/* Delete button - always visible but subtle */}
+        <button
+          type="button"
+          className={cn(
+            "shrink-0 rounded p-1.5 transition-colors",
+            "text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10",
+            "focus:outline-none focus:ring-2 focus:ring-destructive/50"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDeleteDialog(true);
+          }}
+          aria-label={`Delete chat: ${session.title}`}
+          title="Delete chat"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      <DeleteConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={onDelete}
+        title="Delete chat?"
+        description="This conversation will be permanently deleted. This action cannot be undone."
+      />
+    </>
+  );
+}
+
 export function Sidebar({
   sessions,
   currentSessionId,
@@ -36,11 +159,18 @@ export function Sidebar({
   onToggleCollapse,
   className,
 }: SidebarProps) {
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
 
-  const handleDelete = (e: React.MouseEvent, sessionId: string) => {
-    e.stopPropagation();
+  const handleDeleteSession = (sessionId: string) => {
     deleteChatSession(sessionId);
     onDeleteSession(sessionId);
+  };
+
+  const handleClearAll = () => {
+    sessions.forEach((s) => {
+      deleteChatSession(s.id);
+      onDeleteSession(s.id);
+    });
   };
 
   if (isCollapsed) {
@@ -110,26 +240,6 @@ export function Sidebar({
         </Button>
       </div>
 
-      {/* Clear All Button */}
-      {sessions.length > 0 && (
-        <div className="border-b px-3 pb-2">
-          <button
-            type="button"
-            className="w-full rounded bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600"
-            onClick={() => {
-              if (window.confirm("Delete all chats?")) {
-                sessions.forEach((s) => {
-                  deleteChatSession(s.id);
-                  onDeleteSession(s.id);
-                });
-              }
-            }}
-          >
-            Clear All Chats
-          </button>
-        </div>
-      )}
-
       {/* Chat List */}
       <ScrollArea className="flex-1 px-2">
         <div className="flex flex-col gap-1 pb-4">
@@ -141,43 +251,39 @@ export function Sidebar({
             </div>
           ) : (
             sessions.map((session) => (
-              <div
+              <ChatItem
                 key={session.id}
-                className={cn(
-                  "rounded-md px-3 py-2 text-sm transition-colors",
-                  currentSessionId === session.id
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )}
-              >
-                <div
-                  className="flex cursor-pointer items-center gap-2"
-                  onClick={() => onSelectSession(session)}
-                >
-                  <MessageSquare className="h-4 w-4 shrink-0" />
-                  <span className="truncate font-medium">{session.title}</span>
-                </div>
-                <div className="mt-1 pl-6 text-xs text-muted-foreground">
-                  {formatRelativeTime(session.updatedAt)}
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 w-full rounded border border-red-300 bg-red-50 py-1 text-xs font-medium text-red-600 hover:bg-red-100"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (window.confirm("Delete this chat?")) {
-                      handleDelete(e, session.id);
-                    }
-                  }}
-                >
-                  Delete This Chat
-                </button>
-              </div>
+                session={session}
+                isActive={currentSessionId === session.id}
+                onSelect={() => onSelectSession(session)}
+                onDelete={() => handleDeleteSession(session.id)}
+              />
             ))
           )}
         </div>
       </ScrollArea>
+
+      {/* Clear All - Footer link style */}
+      {sessions.length > 0 && (
+        <div className="border-t px-3 py-2">
+          <button
+            type="button"
+            className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors"
+            onClick={() => setShowClearAllDialog(true)}
+          >
+            Clear all chats
+          </button>
+        </div>
+      )}
+
+      {/* Clear All Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={showClearAllDialog}
+        onClose={() => setShowClearAllDialog(false)}
+        onConfirm={handleClearAll}
+        title="Clear all chats?"
+        description={`This will permanently delete ${sessions.length} conversation${sessions.length === 1 ? "" : "s"}. This action cannot be undone.`}
+      />
     </div>
   );
 }
@@ -200,10 +306,18 @@ export function MobileSidebarContent({
   onNewChat,
   onDeleteSession,
 }: MobileSidebarContentProps) {
-  const handleDelete = (e: React.MouseEvent, sessionId: string) => {
-    e.stopPropagation();
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
+
+  const handleDeleteSession = (sessionId: string) => {
     deleteChatSession(sessionId);
     onDeleteSession(sessionId);
+  };
+
+  const handleClearAll = () => {
+    sessions.forEach((s) => {
+      deleteChatSession(s.id);
+      onDeleteSession(s.id);
+    });
   };
 
   return (
@@ -220,26 +334,6 @@ export function MobileSidebarContent({
         </Button>
       </div>
 
-      {/* Clear All Button */}
-      {sessions.length > 0 && (
-        <div className="border-b px-4 pb-3">
-          <button
-            type="button"
-            className="w-full rounded bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
-            onClick={() => {
-              if (window.confirm("Delete all chats?")) {
-                sessions.forEach((s) => {
-                  deleteChatSession(s.id);
-                  onDeleteSession(s.id);
-                });
-              }
-            }}
-          >
-            Clear All Chats
-          </button>
-        </div>
-      )}
-
       {/* Chat List */}
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-1 p-2">
@@ -251,43 +345,39 @@ export function MobileSidebarContent({
             </div>
           ) : (
             sessions.map((session) => (
-              <div
+              <ChatItem
                 key={session.id}
-                className={cn(
-                  "rounded-md px-3 py-3 text-sm transition-colors",
-                  currentSessionId === session.id
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent/50"
-                )}
-              >
-                <div
-                  className="flex cursor-pointer items-center gap-2"
-                  onClick={() => onSelectSession(session)}
-                >
-                  <MessageSquare className="h-4 w-4 shrink-0" />
-                  <span className="truncate font-medium">{session.title}</span>
-                </div>
-                <div className="mt-1 pl-6 text-xs text-muted-foreground">
-                  {formatRelativeTime(session.updatedAt)}
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 w-full rounded border border-red-300 bg-red-50 py-1 text-xs font-medium text-red-600 hover:bg-red-100"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (window.confirm("Delete this chat?")) {
-                      handleDelete(e, session.id);
-                    }
-                  }}
-                >
-                  Delete This Chat
-                </button>
-              </div>
+                session={session}
+                isActive={currentSessionId === session.id}
+                onSelect={() => onSelectSession(session)}
+                onDelete={() => handleDeleteSession(session.id)}
+              />
             ))
           )}
         </div>
       </ScrollArea>
+
+      {/* Clear All - Footer link style */}
+      {sessions.length > 0 && (
+        <div className="border-t px-4 py-3">
+          <button
+            type="button"
+            className="w-full text-center text-sm text-muted-foreground hover:text-destructive transition-colors"
+            onClick={() => setShowClearAllDialog(true)}
+          >
+            Clear all chats
+          </button>
+        </div>
+      )}
+
+      {/* Clear All Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={showClearAllDialog}
+        onClose={() => setShowClearAllDialog(false)}
+        onConfirm={handleClearAll}
+        title="Clear all chats?"
+        description={`This will permanently delete ${sessions.length} conversation${sessions.length === 1 ? "" : "s"}. This action cannot be undone.`}
+      />
     </div>
   );
 }
